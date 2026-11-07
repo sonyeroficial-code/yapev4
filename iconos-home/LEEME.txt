@@ -1,0 +1,21 @@
+ÍCONOS DEL HOME — EN EL MISMO ORDEN DE LA PANTALLA
+
+ 1. Recargar celular        = recargar-celular.jpg
+ 2. Yapear servicios        = yapear-servicios.svg
+ 3. Promos                  = promos.jpg
+ 4. Aprobar compras         = aprobar-compras.jpg
+ 5. Créditos                = creditos.json (animación Lottie)
+ 6. Gaming                  = gaming.png (mando morado, imagen externa)
+ 7. Dólares                 = dolares.jpg
+ 8. Remesas                 = remesas.jpg
+ 9. SOAT                    = soat.jpg
+10. Recargar Transportes    = recargar-transportes.jpg
+11. Tienda                  = tienda-cyber.json (animación Lottie)
+12. Ver todo                = ver-todo.jpg
+
+El archivo animaciones-home.js muestra los JSON animados de Créditos y Tienda
+dentro de sus respectivos botones; si no cargan, quedan los íconos originales.
+Tienda y Gaming intercambiaron posiciones para que las dos animaciones no
+queden juntas. Los archivos .jpg son las imágenes recibidas (formato JPEG).
+
+Todos los botones conservan sus funciones originales.

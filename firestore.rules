@@ -1,0 +1,150 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function authenticated() { return request.auth != null; }
+    function owner(uid) { return authenticated() && request.auth.uid == uid; }
+    function admin() {
+      return authenticated() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.enabled == true;
+    }
+    function seller(id) {
+      return authenticated()
+        && exists(/databases/$(database)/documents/vendorManagers/$(request.auth.uid))
+        && get(/databases/$(database)/documents/vendorManagers/$(request.auth.uid)).data.enabled == true
+        && get(/databases/$(database)/documents/vendorManagers/$(request.auth.uid)).data.vendorId == id
+        && exists(/databases/$(database)/documents/vendors/$(id))
+        && get(/databases/$(database)/documents/vendors/$(id)).data.enabled == true;
+    }
+    function watermarkText(d) {
+      return !d.keys().hasAny(['watermarkText']) ||
+        (d.watermarkText is string && d.watermarkText.size() <= 80);
+    }
+    function vendorShape(d) {
+      return d.keys().hasAll(['label','enabled','updatedAt'])
+        && d.keys().hasOnly(['label','enabled','watermarkText','updatedAt'])
+        && d.label is string && d.label.size() <= 80
+        && d.enabled is bool && d.updatedAt == request.time && watermarkText(d);
+    }
+    function watermarkShape(d) {
+      return d.keys().hasAll(['hiddenApps','updatedAt','managedBy'])
+        && d.keys().hasOnly(['hiddenApps','updatedAt','managedBy'])
+        && d.hiddenApps is list && d.hiddenApps.size() <= 4
+        && d.hiddenApps.hasOnly(['yape','bbva','bcp','ibk'])
+        && d.updatedAt == request.time && d.managedBy == request.auth.uid;
+    }
+    function vendorEnabled(id) {
+      return id is string && id.matches('^[A-Z0-9_-]{2,40}$')
+        && exists(/databases/$(database)/documents/vendors/$(id))
+        && get(/databases/$(database)/documents/vendors/$(id)).data.enabled == true;
+    }
+    function shape(d) {
+      return d.keys().hasAll(['email','name','vendorId','createdAt','updatedAt','authTime','installation','sessionId','active','license','licenseUntil','banned','managedAt','managedBy'])
+        && d.keys().hasOnly(['email','name','vendorId','createdAt','updatedAt','authTime','installation','sessionId','active','license','licenseUntil','banned','managedAt','managedBy'])
+        && d.email is string && d.name is string && d.name.size() >= 2 && d.name.size() <= 100
+        && d.vendorId is string && d.vendorId.matches('^[A-Z0-9_-]{2,40}$')
+        && d.createdAt is timestamp && d.updatedAt == request.time
+        && d.authTime is int && d.installation is string && d.installation.matches('^[a-f0-9-]{36}$')
+        && d.sessionId is string && d.sessionId.matches('^[a-f0-9-]{36}$') && d.active is bool
+        && d.license in ['inactive','active'] && (d.licenseUntil == null || d.licenseUntil is timestamp)
+        && d.banned is bool && (d.managedAt == null || d.managedAt is timestamp) && d.managedBy is string;
+    }
+    function session(uid) {
+      let p=get(/databases/$(database)/documents/users/$(uid)).data;
+      return owner(uid) && p.active == true && p.banned == false && p.authTime == request.auth.token.auth_time;
+    }
+    function emailKey(email) { return hashing.sha256(email.lower()).toHexString().lower(); }
+    function pairKey(vendorId, email) { return hashing.sha256(vendorId + '\n' + email.lower()).toHexString().lower(); }
+    function directoryFlag(d) { return d.keys().hasOnly(['registered']) && d.registered == true; }
+    function ownDirectory(key, pair) {
+      let p=getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return p.email == request.auth.token.email.lower()
+        && key == (pair ? pairKey(p.vendorId, p.email) : emailKey(p.email));
+    }
+    match /accountEmails/{key} {
+      allow get: if key.matches('^[a-f0-9]{64}$');
+      allow list, delete: if false;
+      allow create, update: if key.matches('^[a-f0-9]{64}$') && directoryFlag(request.resource.data)
+        && (admin() || (authenticated() && ownDirectory(key, false)));
+    }
+    match /accountPairs/{key} {
+      allow get: if key.matches('^[a-f0-9]{64}$');
+      allow list, delete: if false;
+      allow create, update: if key.matches('^[a-f0-9]{64}$') && directoryFlag(request.resource.data)
+        && (admin() || (authenticated() && ownDirectory(key, true)));
+    }
+    match /system/accountDirectory {
+      allow get: if admin();
+      allow create, update: if admin() && request.resource.data.keys().hasOnly(['version','count','completedAt'])
+        && request.resource.data.version == 1 && request.resource.data.count is int
+        && request.resource.data.count >= 0 && request.resource.data.completedAt == request.time;
+      allow list, delete: if false;
+    }
+    match /admins/{uid} {
+      allow get: if owner(uid);
+      // Bootstrap and revoke administrators only through the trusted console/Admin SDK.
+      allow list, write: if false;
+    }
+    match /vendorManagers/{uid} {
+      allow get: if owner(uid) || admin();
+      allow list: if admin();
+      allow create, update: if admin() && request.resource.data.keys().hasAll(['vendorId','enabled','updatedAt'])
+        && request.resource.data.keys().hasOnly(['vendorId','enabled','updatedAt'])
+        && request.resource.data.vendorId is string
+        && request.resource.data.vendorId.matches('^[A-Z0-9_-]{2,40}$')
+        && exists(/databases/$(database)/documents/vendors/$(request.resource.data.vendorId))
+        && request.resource.data.enabled is bool
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+    match /vendors/{id} {
+      allow get: if true;
+      allow list: if admin();
+      allow create: if admin() && id.matches('^[A-Z0-9_-]{2,40}$') && vendorShape(request.resource.data);
+      allow update: if id.matches('^[A-Z0-9_-]{2,40}$') && vendorShape(request.resource.data)
+        && (admin() || (seller(id)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['watermarkText','updatedAt'])));
+      allow delete: if false;
+    }
+    match /users/{uid} {
+      allow get: if owner(uid) || admin() || seller(resource.data.vendorId);
+      allow list: if admin() || seller(resource.data.vendorId);
+      allow delete: if false;
+      allow create: if owner(uid) && shape(request.resource.data) && vendorEnabled(request.resource.data.vendorId)
+        && request.resource.data.email == request.auth.token.email.lower()
+        && getAfter(/databases/$(database)/documents/accountEmails/$(emailKey(request.resource.data.email))).data.registered == true
+        && getAfter(/databases/$(database)/documents/accountPairs/$(pairKey(request.resource.data.vendorId, request.resource.data.email))).data.registered == true
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.authTime == request.auth.token.auth_time
+        && request.resource.data.license == 'inactive' && request.resource.data.licenseUntil == null
+        && request.resource.data.banned == false && request.resource.data.active == true
+        && request.resource.data.managedAt == null && request.resource.data.managedBy == '';
+      allow update: if shape(request.resource.data) && (
+        (owner(uid) && resource.data.banned == false
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['authTime','installation','sessionId','active','updatedAt'])
+          && request.resource.data.authTime == request.auth.token.auth_time
+          && (request.resource.data.authTime > resource.data.authTime
+            || (request.resource.data.authTime == resource.data.authTime
+              && request.resource.data.installation == resource.data.installation
+              && request.resource.data.sessionId == resource.data.sessionId))
+          && (resource.data.active == true || request.resource.data.active == false || request.resource.data.authTime > resource.data.authTime))
+        || (admin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['license','licenseUntil','banned','managedAt','managedBy','updatedAt'])
+          && request.resource.data.managedAt == request.time && request.resource.data.managedBy == request.auth.uid));
+      match /preferences/{setting} {
+        allow get: if setting == 'watermark' && (owner(uid) || admin() ||
+          seller(get(/databases/$(database)/documents/users/$(uid)).data.vendorId));
+        allow list, delete: if false;
+        allow create, update: if setting == 'watermark' && watermarkShape(request.resource.data)
+          && (admin() || seller(get(/databases/$(database)/documents/users/$(uid)).data.vendorId));
+      }
+      match /contacts/{phone} {
+        allow read, delete: if session(uid);
+        allow create, update: if session(uid)
+          && request.resource.data.keys().hasAll(['celular','titular']) && request.resource.data.keys().hasOnly(['celular','titular'])
+          && request.resource.data.celular == phone && phone.matches('^9[0-9]{8}$')
+          && request.resource.data.titular is string && request.resource.data.titular.size() >= 2 && request.resource.data.titular.size() <= 100;
+      }
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

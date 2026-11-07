@@ -1,0 +1,1 @@
+import{Fa as s,ga as r,l as n,ta as o}from"./chunk-PKUFHZD7.js";function w(t){t||(t=o(s));let i=new n(e=>{if(t.destroyed){e.next();return}return t.onDestroy(e.next.bind(e))});return e=>e.pipe(r(i))}export{w as a};

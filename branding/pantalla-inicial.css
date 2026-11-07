@@ -1,0 +1,26 @@
+/* Solo la bienvenida utiliza fondo negro. Los formularios conservan sus colores. */
+html.bebote-pantalla-inicio,
+html.bebote-pantalla-inicio body,
+.bg-auth.bebote-inicio-negro {
+  background-color: #000 !important;
+  background: #000 !important;
+}
+
+/* Mantener el primer botón turquesa y oscurecer el botón de inicio de sesión. */
+.bg-auth.bebote-inicio-negro .p-button-login {
+  background: #272727 !important;
+  border-color: #484848 !important;
+  color: #fff !important;
+}
+
+/* Ambos botones bajan juntos y conservan su alineación y separación. */
+.bg-auth.bebote-inicio-negro .h-18rem {
+  transform: translateY(clamp(12px, 3.2vh, 48px));
+}
+
+/* En celulares pequeños, evitar que los botones queden fuera de la pantalla. */
+@media (max-height: 740px) {
+  .bg-auth.bebote-inicio-negro .h-18rem {
+    transform: translateY(10px);
+  }
+}

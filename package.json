@@ -1,0 +1,21 @@
+{
+  "name": "ypfk-app-pin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build-local.cjs",
+    "start": "python3 servir.py",
+    "test": "node tests/animaciones.test.cjs && node tests/ui.test.cjs",
+    "test:rules": "node --test tests/rules.test.cjs",
+    "test:integration": "node tests/emulator.test.cjs"
+  },
+  "dependencies": {
+    "firebase": "13.2.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "jsdom": "30.1.3",
+    "fake-indexeddb": "6.2.7",
+    "@firebase/rules-unit-testing": "6.0.0"
+  }
+}

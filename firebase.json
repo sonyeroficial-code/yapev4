@@ -1,0 +1,53 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "functions/**",
+      "node_modules/**",
+      "**/.*",
+      "**/*.cjs",
+      "*.md",
+      "LEEME.txt",
+      "RECUPERACION.json",
+      "package*.json",
+      "firestore.rules",
+      "entrada-local.js",
+      "tests/**",
+      "servir.py",
+      "**/*.py",
+      "build-local.cjs",
+      "ACTIVAR_FIREBASE_GRATIS.md",
+      "ARCHIVOS.json"
+    ],
+    "headers": [
+      {
+        "source": "**/*.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store"
+          }
+        ]
+      }
+    ]
+  },
+  "emulators": {
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8085
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true,
+    "auth": {
+      "host": "127.0.0.1",
+      "port": 9099
+    }
+  }
+}

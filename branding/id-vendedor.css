@@ -1,0 +1,37 @@
+/* Insignia discreta solo para el ID exacto SONYER. */
+.form-group > .sonyer-verified-badge {
+  position: absolute;
+  top: 1rem;
+  right: -0.45rem;
+  transform: translateY(-50%);
+  display: block;
+  width: 3rem;
+  height: 3rem;
+  background: url('./insignia-sonyer.png') center / contain no-repeat;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.form-group > .sonyer-verified-badge::after {
+  content: '✓';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 1.05rem;
+  line-height: 1;
+  font-weight: 900;
+  text-shadow: 0 1px 3px rgba(0, 45, 130, .8);
+}
+
+.form-group > .sonyer-verified-badge[hidden] {
+  display: none !important;
+}
+
+.form-group input#vendorId,
+.form-group input[formcontrolname='vendorId'] {
+  text-transform: uppercase;
+  padding-right: 2.45rem;
+  box-sizing: border-box;
+}

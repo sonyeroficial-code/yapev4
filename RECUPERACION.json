@@ -1,0 +1,8 @@
+{
+  "entrega": "App de clientes",
+  "proyecto": "loginv3-a7e62",
+  "version_base": 11,
+  "separacion": "Recursos independientes; comparte Firebase con el otro ZIP",
+  "validacion": "11 pruebas de reglas; interfaz nativa y preparación del panel probadas; integración con SDK reales en emuladores Auth/Firestore",
+  "acceso": "Validar vendedor/correo, verificar PIN en candado, crear y repetir nuevo PIN, desbloquear en QR; sin enlaces"
+}

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es" data-theme="light" translate="no" data-beasties-container>
+
+<head>
+  <meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://zsbtgznbqsbkqbpfnume.supabase.co; worker-src 'self' blob:; media-src 'self' data: blob:; object-src 'none'">
+  <title>Yape</title>
+  <base href="/">
+  <script id="local-preview-bootstrap">
+    (function () {
+      var host = location.hostname.toLowerCase();
+      var octets = host.split('.').map(Number);
+      var ipv4 = octets.length === 4 && octets.every(function (n) {
+        return Number.isInteger(n) && n >= 0 && n <= 255;
+      });
+      var localHost = host === 'localhost' || host.endsWith('.localhost') ||
+        host === '[::1]' || host === '::1' || host === '0.0.0.0' ||
+        (ipv4 && (octets[0] === 127 || octets[0] === 10 ||
+          (octets[0] === 192 && octets[1] === 168) ||
+          (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31)));
+      window.__YPFK_LOCAL_PREVIEW__ = localHost ||
+        location.protocol === 'file:' || location.protocol === 'content:' ||
+        host === 'appassets.androidplatform.net';
+      if (!window.__YPFK_LOCAL_PREVIEW__) return;
+
+      var base = document.querySelector('base');
+      var entryFile = /\/(?:index|ABRIR_AQUI)\.html$/i.test(location.pathname);
+      var root = new URL(base.getAttribute('href'), location.href);
+      var saved = null;
+      try { saved = sessionStorage.getItem('ypfk-local-base'); } catch (_) {}
+      if (entryFile || location.pathname.endsWith('/')) {
+        root = new URL('.', location.href);
+      } else if (saved && location.pathname.startsWith(saved)) {
+        root = new URL(saved, location.href);
+      }
+      base.href = root.href;
+      try { sessionStorage.setItem('ypfk-local-base', root.pathname); } catch (_) {}
+      // Avoid an old worker serving the previous installation screen locally.
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          registrations.forEach(function (registration) {
+            if (registration.scope === root.href) registration.unregister();
+          });
+        }).catch(function () {});
+      }
+    }());
+  </script>
+  <meta name="description" content=".">
+  <meta name="keywords" content="Morado">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <meta id="theme-meta" name="theme-color" content="#660185">
+  <meta name="msapplication-navbutton-color" content="#660185">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="color-scheme" content="light dark">
+
+  <meta name="google" content="notranslate">
+  <meta property="og:title" content="Morado">
+  <meta property="og:description" content="Morado.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ypfk-xpress.vercel.app">
+  <meta property="og:image" content="https://ypfk-xpress.vercel.app/icons/icon-512x512.png">
+  <meta property="og:site_name" content="Morado Xpress">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="branding/id-vendedor.css?v=sonyer-1">
+  <script defer src="branding/id-vendedor.js?v=sonyer-2"></script>
+
+  <script>
+    if (window.opener && new URLSearchParams(location.search).has("auth")) {
+      const params = new URLSearchParams(location.search);
+
+      window.opener.postMessage({
+        auth: params.get('auth') || '',
+        email: params.get('email') || '',
+        error: params.get('error') || '',
+        pending: params.get('pending') || '',
+      }, location.origin);
+
+      window.close();
+    }
+
+    function updateThemeColor() {
+      var url = location.pathname.toLowerCase();
+      var color = '#790699';
+
+      if (url.includes('bcp')) color = '#002A8E';
+      else if (url.includes('ibk')) color = '#05BE50';
+      else if (url.includes('bbva')) color = '#001391';
+      else if (url.includes('voucher')) color = '#660185';
+      else if (url !== '/') color = '#790699';
+
+      var meta = document.getElementById('theme-meta');
+      if (meta) {
+        meta.removeAttribute('content');
+        meta.setAttribute('content', color);
+      }
+      document.documentElement.style.backgroundColor = color;
+    }
+
+    updateThemeColor();
+
+    window.addEventListener('DOMContentLoaded', updateThemeColor);
+  </script>
+<style>@-webkit-keyframes fa-spin{0%{-webkit-transform:rotate(0deg);transform:rotate(0)}to{-webkit-transform:rotate(359deg);transform:rotate(359deg)}}:root{color-scheme:light;--p-primary-500:#04c5b7 !important;--p-button-primary-hover-background:#04c5b7 !important;--p-button-primary-hover-border-color:#04c5b7 !important;--p-button-primary-active-background:#04c5b7 !important;--p-button-primary-active-border-color:#04c5b7 !important}@media (prefers-color-scheme: dark){:root{color-scheme:light}}body{margin:0rem;padding:0rem;-webkit-touch-callout:none}html{font-family:Roboto,sans-serif}html,body{overscroll-behavior-y:none;touch-action:pan-x;height:100%;overflow:hidden;background-color:#790699}</style><link rel="stylesheet" href="styles-SDP26WHO.css"><link rel="stylesheet" href="branding/pantalla-inicial.css?v=negro-1"><noscript><link rel="stylesheet" href="styles-SDP26WHO.css"></noscript>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Yape">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512x512.png">
+</head>
+
+<body translate="no">
+  <script src="arranque.js?v=pin-panel-8"></script>
+  <app-root><div id="inicio-pendiente" style="padding:40px 24px;color:white;text-align:center;font:16px sans-serif">Abriendo…</div></app-root>
+  <noscript>Please enable JavaScript to continue using this application.</noscript>
+<script>window.__SONYER_GLOBAL_AUTOCOMPLETE__=true;</script>
+<script defer src="app-local.js?v=sonyer-gaming-fix12"></script>
+<script defer src="iconos-home/animaciones-home.js?v=iconos-3"></script>
+<script defer src="branding/pantalla-inicial.js?v=negro-1"></script>
+<script>
+(function(){
+  if (!('serviceWorker' in navigator)) return;
+  window.addEventListener('load', function(){
+    if (location.protocol === 'https:' || location.hostname === 'localhost') {
+      navigator.serviceWorker.register('./sonyer-pwa-sw.js', {scope:'./'}).catch(function(e){console.warn('PWA:',e);});
+    }
+  });
+})();
+</script>
+</body>
+
+</html>

@@ -1,0 +1,18 @@
+PERSONALIZACIÓN DE BIENVENIDA Y SOPORTE
+
+- Logo central: branding/bebote-sonyer.png
+- Se muestran dos accesos: "Crear una cuenta" y "Ya tengo una cuenta Yape".
+- Se ocultan el botón blanco duplicado y su separador "o".
+- Los dos accesos principales conservan sus funciones originales.
+- La bienvenida tiene fondo negro, con el segundo botón gris oscuro.
+- Los botones están ligeramente más abajo; en pantallas pequeñas se ajustan.
+- Las demás pantallas de registro mantienen sus fondos originales.
+- Advertencia: "Cualquier duda a - @bebote19".
+- Telegram del enlace de ayuda: https://t.me/bebote19
+- Pie de advertencia: "Desarrollado por @bebote19".
+- El ID del vendedor se convierte a mayúsculas mientras se escribe.
+- No permite ingresar espacios y elimina espacios de IDs pegados.
+- Solo el ID exacto "SONYER" muestra la insignia azul con el check blanco.
+- Esa insignia no concede permisos: Firebase sigue verificando los IDs.
+
+Se mantienen las condiciones de uso y las etiquetas de SIMULACIÓN.
