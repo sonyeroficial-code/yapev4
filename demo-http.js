@@ -28,7 +28,7 @@ export function demoInterceptor(request, next) {
   switch (path) {
     case 'resources/get_resellers': return ok({
       supplier: '000000000000000000000000', resellers: [{ username: 'DEMO LOCAL', whatsapp: '', telegram: 'bebote19', instagram: '', tiktok: '' }],
-      apk: '', support: 'default', qr: null, payments: null, logo: image('branding/bebote-sonyer.png')
+      apk: '', support: 'telegram', qr: null, payments: null, logo: image('branding/bebote-sonyer.png')
     });
     case 'resources/get_resources': return ok({
       icons: [
