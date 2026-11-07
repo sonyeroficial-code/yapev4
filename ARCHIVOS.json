@@ -62,8 +62,8 @@
     },
     {
       "path": "app-local.js",
-      "bytes": 7160986,
-      "sha256": "bf4278ced4c591edc5949fbe4537cb1fbffcac9aa2fd5cf9c8d74737be69862f"
+      "bytes": 7169029,
+      "sha256": "177b57116b266e7295da2db6e0f001a75b3b70070b5d2161b4fdd89b1f75107a"
     },
     {
       "path": "arranque.js",
@@ -612,8 +612,8 @@
     },
     {
       "path": "chunk-BQ5Y6PQQ.js",
-      "bytes": 2218,
-      "sha256": "e3762b7eb1fa967ec4d740161b17c64f622fa8be4d89119dc931a530d8327741"
+      "bytes": 2220,
+      "sha256": "ba5f593ae1ebd328fbc2e5cb02da6d23bb64919e6e031cc4cbaaf135d064235f"
     },
     {
       "path": "chunk-DGL3AXYS.js",
@@ -627,8 +627,8 @@
     },
     {
       "path": "chunk-ELW2TH7C.js",
-      "bytes": 698524,
-      "sha256": "1021016fb3e1eb3befa03ec3d22b50722b9cd2a7b083068ea8d759aecae2fb97"
+      "bytes": 698220,
+      "sha256": "620d87a9c8225f066d16275cb2678859b950df741946b90da4918b50bac3d8bf"
     },
     {
       "path": "chunk-EYGMK4NN.js",
@@ -677,8 +677,8 @@
     },
     {
       "path": "chunk-NCGGQLDA.js",
-      "bytes": 627768,
-      "sha256": "a7d7eb692824451d135b4be87080f4ad41ec02696e2931c2f175252d8a0487f2"
+      "bytes": 627907,
+      "sha256": "9cf9fcf087eff4c39293594b9391bea459d4a6d765c447d944e44902aa88d321"
     },
     {
       "path": "chunk-OXTNFNGB.js",
@@ -742,8 +742,8 @@
     },
     {
       "path": "demo-http.js",
-      "bytes": 4193,
-      "sha256": "365c253721aa37b9deec270b5339ac6cb5956a431ca449f05557dbf17accb0d3"
+      "bytes": 4223,
+      "sha256": "8b65a120caeb28d5bf80c0c4908464d1bc8f1aa79bf2b890d6c0d6a2cf71b3e6"
     },
     {
       "path": "demo-init.js",
@@ -1307,8 +1307,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 6404,
-      "sha256": "2b62a2e0a4a4a6c3228125cf225cd7bc39fb613f14168c52897ea7b6c8586429"
+      "bytes": 6992,
+      "sha256": "877f974baf547d6b6e919fc227b4bc41f9fad69f886a00de09b3f507628b6ab9"
     },
     {
       "path": "LEEME.txt",
@@ -1362,8 +1362,8 @@
     },
     {
       "path": "ngsw.json",
-      "bytes": 27115,
-      "sha256": "73f2008e4de6ad3105cf90724282eb47d1de0d136b63919fc240e2f9497b1b8a"
+      "bytes": 23013,
+      "sha256": "c2598bcebd7ad906c74af770629334fa780a6913c0e5bd8ad9f6427f7b394bd5"
     },
     {
       "path": "operadoras/bitel.svg",
@@ -1594,6 +1594,21 @@
       "path": "yapito.gif",
       "bytes": 50895,
       "sha256": "5a323e565df1cafebc05561bdbd41087754686ee0e77ea2ff2f597c29660da0f"
+    },
+    {
+      "path": "instalacion-acceso.js",
+      "bytes": 1835,
+      "sha256": "14bfce9c616a371c0f3b388a87049f6ee7a12e2cda93029b0d7d5f07c898f2f0"
+    },
+    {
+      "path": "instalar.html",
+      "bytes": 20075,
+      "sha256": "0a19a23d5c34b7926c689cf4d7b90e12b4cf2e17bcdf0213fd7f5b841c6cb16f"
+    },
+    {
+      "path": "tutorial-iphone.mp4",
+      "bytes": 2924390,
+      "sha256": "397df07430f08dc671ba280ea12f7134169cae62e14c957f445d0478714705a9"
     }
   ]
 }
