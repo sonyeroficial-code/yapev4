@@ -109,24 +109,28 @@ function __SONYER_validQrContact(row){
   return /^9\d{8}$/.test(phone)&&titular.length>=2?{celular:phone,titular}:null;
 }
 async function __SONYER_readQrAlias(raw){
+  // Primero identificar el contenido REAL del QR, no una foto ni el número temporal.
+  const id=await __SONYER_qrCloudId(raw);
+  if(!id)return null;
   const key=await __SONYER_qrAliasKey(raw);
-  if(!key)return null;
   let local=null;
-  try{local=__SONYER_validQrContact(JSON.parse(__SONYER_contactStore().getItem(key)||'null'))}catch{}
-  // IMPORTANTE: antes se devolvia local inmediatamente, dejando datos antiguos incluso tras actualizar en otro movil.
+  try{if(key)local=__SONYER_validQrContact(JSON.parse(__SONYER_contactStore().getItem(key)||'null'))}catch{}
   try{
-    const user=await A7(),id=await __SONYER_qrCloudId(raw);
-    const response=await Promise.race([
-      __SONYER_GLOBAL_request(user,'lookup-qr',{firebase_id:id}),
-      new Promise((_,reject)=>setTimeout(()=>reject(new Error('Consulta QR sin respuesta')),6500))
-    ]);
-    const cloud=__SONYER_validQrContact(response?.contact);
+    const user=await A7();
+    // V9 cortaba a los 6.5 s, aunque la función de red permite 14 s. Esto
+    // hacía que la consulta de otro teléfono se descartara sin responder.
+    const response=await __SONYER_GLOBAL_request(user,'lookup-qr',{firebase_id:id});
+    if(response?.ok!==true)throw new Error('No se pudo verificar la búsqueda del QR en Supabase.');
+    const cloud=__SONYER_validQrContact(response.contact);
     if(cloud){
-      try{__SONYER_contactStore().setItem(key,JSON.stringify(cloud))}catch{}
+      try{if(key)__SONYER_contactStore().setItem(key,JSON.stringify(cloud))}catch{}
       __SONYER_cacheFullName(cloud.celular,cloud.titular);
       return cloud;
     }
-  }catch(error){console.warn('No se pudo consultar el QR en Supabase:',error?.message||error)}
+    console.info('QR leído; Supabase no tiene datos vinculados a este identificador.');
+  }catch(error){
+    console.warn('La consulta del QR a Supabase no se completó:',error?.message||error);
+  }
   return local;
 }
 async function __SONYER_storeQrAlias(raw,celular,titular,onProgress){
@@ -151,6 +155,12 @@ async function __SONYER_storeQrAlias(raw,celular,titular,onProgress){
     });
     if(result?.ok!==true||result?.saved!=='qr'||result?.firebase_id!==id)
       throw new Error('El servidor no confirmó el guardado del QR.');
+    // No mostrar «Base ✓» únicamente por un POST exitoso. Verificar con
+    // la MISMA consulta que utilizará el otro celular (lectura posterior).
+    const check=await __SONYER_GLOBAL_request(user,'lookup-qr',{firebase_id:id});
+    const saved=__SONYER_validQrContact(check?.contact);
+    if(check?.ok!==true||!saved||saved.celular!==phone||saved.titular!==name)
+      throw new Error('El QR se envió, pero la base no devolvió el nombre y número guardados.');
     state.base=true;
     __SONYER_cacheFullName(phone,name);
   }catch(error){
@@ -5920,7 +5930,7 @@ async receiveDecodedQr(result){
     data.celular=/^9\d{8}$/.test(digits)?digits:'';
     data.titular=String(data.titular||'').trim();
     // Prioridad 1: vínculo QR -> contacto guardado localmente en esta cuenta.
-    if(data.source==='qr'&&data.fullText){
+    if(typeof data.fullText==='string'&&data.fullText.trim()){
       const cached=await __SONYER_readQrAlias(data.fullText);
       if(cached){data.celular=cached.celular;data.titular=cached.titular}
     }

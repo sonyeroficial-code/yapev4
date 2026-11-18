@@ -1,0 +1,24 @@
+V10 – Autocompletado QR entre celulares
+
+ARCHIVOS A REEMPLAZAR: app-local.js e index.html en la raíz.
+NO cambies la Edge Function si ya publicaste la versión V9 y funciona lookup-qr/save-qr.
+
+Correcciones:
+- El escáner permite terminar la solicitud a Supabase (hasta 14 s) antes de
+  concluir que no obtuvo contacto. V9 la descartaba a los 6,5 s.
+- Al guardar, «Base ✓» significa ahora que se escribió Y se pudo VOLVER A LEER
+  el mismo QR desde la base. Si la lectura falla, muestra «Base falló · Reintentar».
+- El lector intenta recuperar datos siempre que recibe contenido QR, sin
+  depender del indicador source.
+- No cambia los diseños, el login, los permisos ni los pagos.
+
+Verificación manual:
+1. En móvil 1, abre Agenda y carga la imagen del QR en el formulario.
+   Comprueba que luego de Guardar diga «Guardado local ✓ · Base ✓».
+   Si solo dice «Contacto ✓ · Base ✓», guardaste un contacto por número,
+   NO el QR y debes cargar la imagen para asociarlo.
+2. En el móvil 2, abre la misma versión V10 por HTTPS, accede con una cuenta
+   autorizada para la misma función Supabase y escanea ese QR.
+3. Si la lectura sigue vacía, inspecciona registros de la Edge Function
+   «sonyer-global»: puede haber un 401/403, timeout o «contact: null».
+   Sin acceso al servidor real no es posible afirmar cuál ocurre.
