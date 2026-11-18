@@ -1,0 +1,40 @@
+V9 — ARREGLO DE GUARDADO/ACTUALIZACION QR ENTRE CELULARES
+
+CAMBIOS EN LA APP
+- app-local.js e index.html: reemplazar en la RAIZ de la app.
+- El formulario de guardar consulta primero a Supabase al cargar un QR conocido,
+  por lo que se autocompletan nombre y numero guardados previamente.
+- Si vuelves a guardar exactamente el mismo QR con otro nombre o numero,
+  se ACTUALIZA el registro asociado al mismo hash; no se crea otro.
+- Al escanear, consulta PRIMERO la base; usa cache local solo si no
+  se encuentra respuesta util. No fuerza los datos antiguos del primer telefono.
+- Boton: Guardando local... / Local ✓ · Guardando en base... /
+  Guardado local ✓ · Base ✓ o Local ✓ · Base fallo · Reintentar.
+- Si falla la base, el formulario permanece abierto para reintentar.
+- Si cargas un contacto sin QR, verifica por separado save-contact.
+
+PASOS OBLIGATORIOS
+1. PUBLICAR la Edge Function 'sonyer-global' en Supabase con el contenido de
+   ACTUALIZAR_sonyer-global.ts (no poner el .ts en la web). La app sola NO basta.
+   Debe estar desplegada con verify_jwt=false porque valida JWT de Firebase.
+   Debe tener el secreto SONYER_SUPABASE_SECRET_KEY del servidor.
+2. Verifica public.qrs: firebase_id debe ser UNIQUE y tener qr,phone,name,destino,
+   firebase_data. Se incluye SQL_SI_FALTAN_TABLAS.sql por si faltan las tablas/indices.
+   El SQL NO crea la tabla contacts ni la RPC sonyer_take_quota que ya debe existir.
+3. Sustituye app-local.js e index.html; publica Vercel, y abre la version nueva
+   en los DOS telefonos. En Acode, prueba con los mismos 2 archivos.
+4. Escanea el QR desde la agenda del primer telefono, escribe nombre y numero reales
+   y toca Guardar. No basta con que ponga 'Local ✓'; debe poner 'Base ✓'.
+5. Escanea ese mismo QR desde el segundo telefono. La lectura consultara la base.
+6. Cambia numero o nombre del mismo QR en el primero, guarda hasta ver Base ✓;
+   el segundo debe recuperar el nuevo valor en el siguiente escaneo.
+
+LIMITACIONES IMPORTANTES
+- No podemos verificar tu Supabase real desde aqui; si 'Base fallo', revisar
+  la funcion, sus secretos, las tablas y los registros del panel Supabase.
+- Solo los QR con nombre y celular reales se sincronizan; numeros aleatorios
+  de simulacion no son identificaciones de titulares.
+- En cualquier caso esta app es una SIMULACION, no un pago bancario real.
+- El servicio original usa aprobacion Firebase + cuota para llamar a la funcion.
+- Las asociaciones antiguas que solo existian en local deben volver a guardarse
+  una vez con V9 para aparecer en otros celulares.

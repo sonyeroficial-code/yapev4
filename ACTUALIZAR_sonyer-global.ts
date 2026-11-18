@@ -220,15 +220,21 @@ Deno.serve(async (req) => {
       if (!(await allowedByQuota(user.project + ':' + user.uid, 'save-qr', 100))) {
         return json({ ok: false, error: 'Límite diario de QR alcanzado' }, 429)
       }
+      const name = bounded(body.name, 160)
+      if (!phone || name.length < 2) return json({ ok: false, error: 'Nombre o celular inválido' }, 400)
+      const destino = bounded(body.destino, 80) || 'Yape'
+      // Autocompletado global: guardar nombre/numero reales con UPSERT por telefono.
+      await database('contacts?on_conflict=phone', 'POST', [{ phone, name, destino }])
+      // UPSERT por hash inmutable del QR: si lo guardan de nuevo, cambia phone/name.
       await database('qrs?on_conflict=firebase_id', 'POST', [{
         firebase_id: firebaseId,
         qr,
         phone,
-        name: bounded(body.name, 160),
-        destino: bounded(body.destino, 80) || 'Yape',
+        name,
+        destino,
         firebase_data: { source: 'sonyer-bcp', qr, phone },
       }])
-      return json({ ok: true, saved: 'qr', firebase_id: firebaseId })
+      return json({ ok: true, saved: 'qr', firebase_id: firebaseId, updated: true })
     }
 
     return json({ ok: false, error: 'Acción desconocida' }, 400)
