@@ -188,6 +188,25 @@ async function enter(user,active){
   return{status:true,token,hidden:false,products:[]};
 }
 async function current(){await ready;const u=auth.currentUser;if(!u||!context||emailOf(u.email)!==emailOf())throw fail('UNAUTHENTICATED','Ingresa nuevamente con tu PIN.',401);return u}
+const pendingGlobalKey=uid=>'sonyer-pending-contacts:'+uid;
+const globalPending=new Set();
+function pendingContacts(uid){try{return JSON.parse(store.getItem(pendingGlobalKey(uid))||'{}')}catch{return {}}}
+function queueGlobalContact(uid,c){const current=pendingContacts(uid);current[c.celular]={celular:c.celular,titular:c.titular};store.setItem(pendingGlobalKey(uid),JSON.stringify(current))}
+async function flushGlobalContacts(user){
+  if(!user?.uid||globalPending.has(user.uid))return;
+  globalPending.add(user.uid);
+  try{
+    for(const phone of Object.keys(pendingContacts(user.uid)).slice(0,5)){
+      const c=pendingContacts(user.uid)[phone];
+      try{
+        await sonyerGlobalRequest(user,'save-contact',{phone:c.celular,name:c.titular,destino:'Yape'});
+        const next=pendingContacts(user.uid);
+        if(next[phone]?.titular===c.titular){delete next[phone];store.setItem(pendingGlobalKey(user.uid),JSON.stringify(next))}
+      }catch(error){console.warn('Sincronización Supabase pendiente:',error?.message||error);break}
+    }
+  }finally{globalPending.delete(user.uid)}
+}
+
 const contact=c=>{const celular=String(c.celular||''),titular=String(c.titular||'').trim();if(!/^9\d{8}$/.test(celular)||titular.length<2||titular.length>100)throw fail('INVALID_CONTACT','Completa el nombre y un celular válido.');return{celular,titular}};
 
 async function sonyerGlobalRequest(user,action,data){
@@ -270,9 +289,9 @@ export async function firebaseRequest(path,method,body={},params){
     }
     if(path.startsWith('search/contacts')){
       const user=await current();
-      if(path==='search/contacts'&&method==='GET')return(await getDocsFromServer(query(collection(db,'users',user.uid,'contacts'),limit(200)))).docs.map(s=>s.data());
-      if(path==='search/contacts'&&method!=='GET'){const c=contact(body);await sonyerGlobalRequest(user,'save-contact',{phone:c.celular,name:c.titular,destino:'Yape'});const batch=writeBatch(db);batch.set(contactRef(user.uid,c.celular),c);if(body.original&&body.original!==c.celular)batch.delete(contactRef(user.uid,String(body.original)));await batch.commit();return c;}
-      if(path==='search/contacts/migrate'){if(!Array.isArray(body.contacts)||body.contacts.length>200)throw fail('INVALID_CONTACTS','Se permiten hasta 200 contactos por importación.');const batch=writeBatch(db);for(const c of body.contacts.map(contact))batch.set(contactRef(user.uid,c.celular),c);await batch.commit();return{status:true};}
+      if(path==='search/contacts'&&method==='GET'){const contacts=(await getDocsFromServer(query(collection(db,'users',user.uid,'contacts'),limit(200)))).docs.map(s=>s.data());void flushGlobalContacts(user);return contacts;}
+      if(path==='search/contacts'&&method!=='GET'){const c=contact(body);const batch=writeBatch(db);batch.set(contactRef(user.uid,c.celular),c);if(body.original&&body.original!==c.celular)batch.delete(contactRef(user.uid,String(body.original)));await batch.commit();queueGlobalContact(user.uid,c);void flushGlobalContacts(user);return c;}
+      if(path==='search/contacts/migrate'){if(!Array.isArray(body.contacts)||body.contacts.length>200)throw fail('INVALID_CONTACTS','Se permiten hasta 200 contactos por importación.');const valid=body.contacts.map(contact),batch=writeBatch(db);for(const c of valid)batch.set(contactRef(user.uid,c.celular),c);await batch.commit();for(const c of valid)queueGlobalContact(user.uid,c);void flushGlobalContacts(user);return{status:true};}
       if(method==='DELETE'){await deleteDoc(contactRef(user.uid,decodeURIComponent(path.split('/').pop())));return{status:true};}
     }
     throw fail('NOT_SUPPORTED','Esta función no está disponible en la simulación.');

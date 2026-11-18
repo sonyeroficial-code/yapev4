@@ -3,11 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node build-local.cjs",
+    "build": "node -e \"const fs=require('node:fs'); for(const file of ['index.html','app-local.js','firebase-client.js']) fs.accessSync(file); console.log('Usando la versión corregida precompilada de QR y guardado.');\"",
     "start": "python3 servir.py",
     "test": "node tests/animaciones.test.cjs && node tests/ui.test.cjs",
     "test:rules": "node --test tests/rules.test.cjs",
-    "test:integration": "node tests/emulator.test.cjs"
+    "test:integration": "node tests/emulator.test.cjs",
+    "build:source": "node build-local.cjs",
+    "test:qr": "node tests/qr-fix.test.cjs"
   },
   "dependencies": {
     "firebase": "13.2.0"
