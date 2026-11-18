@@ -6034,17 +6034,8 @@ ngOnDestroy(){
   if(this.__sonyerQrEdit){
     const phone=String(this.celular||'').replace(/\D/g,'');
     const name=String(this.titular||'').trim();
-    if(this.__sonyerQrTemporary){
-      // No confirmar una operación como real usando un celular provisional.
-      window.alert('Este número es temporal. Toca el lápiz junto al número para poner el celular real antes de confirmar.');
-      return;
-    }
-    if(!/^9\d{8}$/.test(phone)||name.length<2){
-      window.alert('Completa el celular y el nombre antes de confirmar.');
-      return;
-    }
     const ctx=globalThis.__SONYER_QR_CONTEXT__;
-    if(ctx&&Date.now()-ctx.date<300000)
+    if(!this.__sonyerQrTemporary&&/^9\d{8}$/.test(phone)&&name.length>=2&&ctx&&Date.now()-ctx.date<300000)
       __SONYER_storeQrAlias(ctx.raw,phone,name).catch(()=>{});
   }
   if(this.demoMode){if(!this.demoSendReady)return;this.demoSendReady=!1,this.tour.stop(),this.tour.goToDemo("voucher");return}if(this.generalService.saldoInsuficiente){this.showSinSaldoModal=!0;return}let A=!this.isService&&!this.isRecharge&&!this.isCompra,t=Yn.fxGenerarNumOperacion();this.data={id:crypto.randomUUID(),titular:this.titular,celular:this.isRecharge?String(this.celular):this.lastDigits?this.fxGenerarCelular(this.lastDigits):null,monto:this.monto,mensaje:this.isCompra?this.msgCompra:this.mensaje,destino:this.destino,fecha:this.fxGenerarFecha(new Date),operacion:this.isService&&this.operacion.length>0?this.operacion:t,recarga:this.isRecharge,servicio:this.isService,compra:this.isCompra,payment:A&&this.autoPayment,showphone:this.showphone,glosa:this.isService?{servicio:this.glosa1,codigo:this.glosa2,titular:this.glosa3}:null},A&&this.showNotificacion&&this.onNotificacion(this.data),A&&this.sendNotificacion&&this.onNotificacionGmail(this.data),this.loader.show(),this.modalOtrosBancos=!1,this.onRefreshBehavior(),setTimeout(()=>{this.loader.hide(),this.sendNotificacion=!1,this.router.navigate(["/voucher"],{state:{data:this.data,isMovimiento:!1}})},1e3)}onGenerarNroOperacion(){this.operacion=Yn.fxGenerarNumOperacion()}onRefreshBehavior(){let A=this.generalService.profile.getValue(),t=Ue(FA({},A),{saldo:Math.max(A.saldo-this.data.monto,0)});this.generalService.profile.next(t),Sh.setItem("datos",JSON.stringify(t));let n=[...this.generalService.movimientos.getValue(),this.data];this.generalService.movimientos.next(n),Sh.setItem("movimientos",JSON.stringify(n))}onCerrar(){if(this.demoMode){this.tour.finishDemo();return}if(this.isRecharge&&this.isChooseOperator){this.isChooseOperator=!1;return}if(this.isRecharge||this.isService||this.isCompra){if(this.fromHome){this.router.navigateByUrl("/");return}this.router.navigateByUrl("/config");return}if(this.showOtrosBancos){this.showOtrosBancos=!1,this.destino="Yape",this.titular=this.generalService.formatTitular(this.__sonyerFullTitular||this.titular,!1),this.showphone=!0;return}let A=this.fromVistaHome?"/home":"/search";this.router.navigateByUrl(A)}onOtrosBancos(){this.showOtrosBancos=!0}onPagarOtroBancos(A){this.showOptions=!1,this.modalOtrosBancos=!0,this.destino=A==="BBVA"?"BBVA Per\xFA":A;
