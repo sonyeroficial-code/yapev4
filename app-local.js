@@ -133,10 +133,32 @@ async function __SONYER_readQrAlias(raw){
   }
   return local;
 }
+// V11: diagnóstico visible, no modifica operaciones ni credenciales.
+function __SONYER_baseFailureLabel(error,phase){
+  const code=Number(error?.status)||0;
+  const message=String(error?.message||error||'');
+  let reason='sin respuesta';
+  if(code===401)reason='401 sesión';
+  else if(code===403)reason='403 permisos';
+  else if(code===404)reason='404 función';
+  else if(code===429)reason='429 límite';
+  else if(code===400){
+    // Mostramos el motivo real que devolvio la Edge Function; antes quedaba oculto.
+    // No incluir QR completo ni credenciales; solo el texto de error del servidor.
+    const detail=message.replace(/[\r\n\t]+/g,' ').trim().slice(0,76);
+    reason='400: '+(detail&&!/^Supabase respondió HTTP 400$/i.test(detail)?detail:'solicitud rechazada');
+  }
+  else if(code>=500)reason='servidor '+code;
+  else if(/tardó demasiado|timeout|abort/i.test(message))reason='tiempo agotado';
+  else if(/no devolvió|no devuelve|sin datos al verificar|no coincide/i.test(message))reason='verificación QR';
+  else if(/fetch|network|conexión/i.test(message))reason='sin conexión';
+  else if(/sesión|PIN|inicia sesión/i.test(message))reason='sesión';
+  return `Local ✓ · Base falló (${reason}) · Reintentar`;
+}
 async function __SONYER_storeQrAlias(raw,celular,titular,onProgress){
   const phone=String(celular||'').replace(/\D/g,'');
   const name=String(titular||'').trim();
-  const state={local:false,base:false,error:''};
+  const state={local:false,base:false,error:'',cause:null,step:'guardar QR'};
   if(!/^9\d{8}$/.test(phone)||name.length<2||name.includes('*')){
     state.error='Escribe un nombre completo y un celular real de 9 dígitos.';
     return state;
@@ -157,15 +179,17 @@ async function __SONYER_storeQrAlias(raw,celular,titular,onProgress){
       throw new Error('El servidor no confirmó el guardado del QR.');
     // No mostrar «Base ✓» únicamente por un POST exitoso. Verificar con
     // la MISMA consulta que utilizará el otro celular (lectura posterior).
+    state.step='verificar QR';
     const check=await __SONYER_GLOBAL_request(user,'lookup-qr',{firebase_id:id});
     const saved=__SONYER_validQrContact(check?.contact);
     if(check?.ok!==true||!saved||saved.celular!==phone||saved.titular!==name)
-      throw new Error('El QR se envió, pero la base no devolvió el nombre y número guardados.');
+      throw new Error('Sin datos al verificar QR: el registro no coincide con lo guardado.');
     state.base=true;
     __SONYER_cacheFullName(phone,name);
   }catch(error){
     state.error=String(error?.message||'No se pudo guardar en Supabase.');
-    console.warn('QR local guardado, pero Supabase pendiente:',state.error);
+    state.cause=error;
+    console.warn('QR local guardado; error en '+state.step+':', {status:error?.status||null,message:state.error});
   }
   return state;
 }
@@ -5822,8 +5846,8 @@ __SONYER_decodeQrImage(t,new lFe).then(async raw=>{
         return;
       }
       if(!result.base){
-        setLabel('Local ✓ · Base falló · Reintentar');
-        console.warn('Sincronización de QR pendiente:',result.error);
+        setLabel(__SONYER_baseFailureLabel(result.cause||result.error,result.step));
+        console.warn('Sincronización de QR pendiente:',{step:result.step,message:result.error});
         return; // No cerrar formulario: usuario puede reintentar sin perder lo escrito.
       }
       setLabel('Guardado local ✓ · Base ✓');
@@ -5840,7 +5864,7 @@ __SONYER_decodeQrImage(t,new lFe).then(async raw=>{
         setLabel('Contacto ✓ · Base ✓');
       }catch(error){
         console.warn('Contacto local guardado, base pendiente:',error?.message||error);
-        setLabel('Local ✓ · Base falló · Reintentar');
+        setLabel(__SONYER_baseFailureLabel(error,'guardar contacto'));
         return;
       }
     }
