@@ -191,6 +191,26 @@ Deno.serve(async (req) => {
       return json({ ok: true, saved: 'contact', phone })
     }
 
+    if (action === 'lookup-qr') {
+      // El cliente solo envía el SHA-256 del contenido del QR (64 hexadecimales).
+      // Nunca se devuelve el contenido QR original ni firebase_data al consultante.
+      const firebaseId = bounded(body.firebase_id, 180)
+      if (!/^qr_[a-f0-9]{64}$/.test(firebaseId)) {
+        return json({ ok: false, error: 'Identificador de QR inválido' }, 400)
+      }
+      if (!(await allowedByQuota(user.project + ':' + user.uid, 'lookup', 750))) {
+        return json({ ok: false, error: 'Límite diario de consultas QR alcanzado' }, 429)
+      }
+      const params = new URLSearchParams({
+        select: 'phone,name,destino', firebase_id: 'eq.' + firebaseId, limit: '1',
+      })
+      const result = await database('qrs?' + params) as Array<Record<string, string>> | null
+      const row = result?.[0]
+      return json({ ok: true, contact: row ? {
+        phone: cleanPhone(row.phone), name: bounded(row.name, 160), destino: bounded(row.destino, 80),
+      } : null })
+    }
+
     if (action === 'save-qr') {
       const qr = bounded(body.qr, 200_000)
       const firebaseId = bounded(body.firebase_id, 180)

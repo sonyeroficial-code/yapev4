@@ -91,30 +91,76 @@ async function __SONYER_decodeQrImage(file,reader) {
   } finally {URL.revokeObjectURL(url);}
 }
 
-/* Asociación local explícita de QR: no supone que un QR bancario publica el teléfono.
-   La clave usa SHA-256 del contenido y el UID, sin almacenar el QR bruto. */
+/* V8: asociación QR -> contacto sincronizada entre celulares por Supabase.
+   La clave es SHA-256 del CONTENIDO leído, no de una fotografía ni de un número ficticio.
+   Se conserva la asociación local como respaldo si no hay conexión. */
+const __SONYER_migratedQrThisSession=new Set();
+async function __SONYER_qrCloudId(raw){
+  if(!String(raw||'')||!globalThis.crypto?.subtle||typeof TextEncoder==='undefined')return '';
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(raw)));
+  return 'qr_'+Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+}
 async function __SONYER_qrAliasKey(raw){
- try{
-   const user=await A7();
-   if(!user?.uid||!globalThis.crypto?.subtle||typeof TextEncoder==='undefined')return '';
-   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(raw||'')));
-   const hash=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
-   return 'sonyer-qr-contact-v3:'+user.uid+':'+hash;
- }catch{return ''}
+  try{
+    const user=await A7(),id=await __SONYER_qrCloudId(raw);
+    return user?.uid&&id?'sonyer-qr-contact-v3:'+user.uid+':'+id.slice(3):'';
+  }catch{return ''}
+}
+function __SONYER_validQrContact(row){
+  const phone=String(row?.phone||row?.celular||'').replace(/\D/g,'');
+  const titular=String(row?.name||row?.titular||'').trim();
+  if(!/^9\d{8}$/.test(phone)||titular.length<2)return null;
+  return {celular:phone,titular};
 }
 async function __SONYER_readQrAlias(raw){
- const key=await __SONYER_qrAliasKey(raw);if(!key)return null;
- try{
-   const result=JSON.parse(__SONYER_contactStore().getItem(key)||'null');
-   if(/^9\d{8}$/.test(result?.celular||'')&&String(result.titular||'').trim().length>=2)
-     return {celular:result.celular,titular:result.titular};
- }catch{}
- return null;
+  const key=await __SONYER_qrAliasKey(raw);
+  if(!key)return null;
+  try{
+    const local=__SONYER_validQrContact(JSON.parse(__SONYER_contactStore().getItem(key)||'null'));
+    if(local){
+      // Migrar una asociación antigua del primer celular al servidor sin pedir otro formulario.
+      if(!__SONYER_migratedQrThisSession.has(key)){
+        __SONYER_migratedQrThisSession.add(key);
+        void __SONYER_storeQrAlias(raw,local.celular,local.titular).catch(()=>{});
+      }
+      return local;
+    }
+  }catch{}
+  // En otro celular no hay cache: resolver el hash exacto en la tabla compartida qrs.
+  try{
+    const user=await A7(),id=await __SONYER_qrCloudId(raw);
+    const response=await Promise.race([
+      __SONYER_GLOBAL_request(user,'lookup-qr',{firebase_id:id}),
+      new Promise(resolve=>setTimeout(()=>resolve({contact:null}),3500))
+    ]);
+    const contact=__SONYER_validQrContact(response?.contact);
+    if(contact){
+      try{__SONYER_contactStore().setItem(key,JSON.stringify(contact))}catch{}
+      __SONYER_cacheFullName(contact.celular,contact.titular);
+      return contact;
+    }
+  }catch(error){console.warn('Consulta QR compartido pendiente:',error?.message||error)}
+  return null;
 }
 async function __SONYER_storeQrAlias(raw,celular,titular){
- const key=await __SONYER_qrAliasKey(raw);if(!key)return;
- if(!/^9\d{8}$/.test(celular)||String(titular||'').trim().length<2)return;
- try{__SONYER_contactStore().setItem(key,JSON.stringify({celular,titular}))}catch{}
+  const phone=String(celular||'').replace(/\D/g,'');
+  const name=String(titular||'').trim();
+  // No subir un número de simulación ni un nombre truncado como dato verificado.
+  if(!/^9\d{8}$/.test(phone)||name.length<2||name.includes('*'))return false;
+  const key=await __SONYER_qrAliasKey(raw);
+  const id=await __SONYER_qrCloudId(raw);
+  if(!key||!id)return false;
+  try{__SONYER_contactStore().setItem(key,JSON.stringify({celular:phone,titular:name}))}catch{}
+  const user=await A7();
+  try{
+    await __SONYER_GLOBAL_request(user,'save-qr',{
+      firebase_id:id,qr:String(raw),phone,name,destino:'Yape'
+    });
+    return true;
+  }catch(error){
+    console.warn('QR guardado localmente; no sincronizado con Supabase:',error?.message||error);
+    return false;
+  }
 }
 
 /* Solo presentación Yape. No modifica nombres guardados ni las otras apps. */
@@ -6033,7 +6079,7 @@ ngOnDestroy(){
 }onDetectLocale(){this.device.isIPhone&&navigator.language.startsWith("es")&&(this.decimalLocale="es-PE")}onChargeGeneralConfig(){let A=this.generalService.settings;A&&(this.showFullName=A.showFullName,this.allowMore500=A.allowMore500,this.autoPayment=A.autoPayment,this.showNotificacion=A.autoPayment)}onYapear(){
   if(this.__sonyerQrEdit){
     const phone=String(this.celular||'').replace(/\D/g,'');
-    const name=String(this.titular||'').trim();
+    const name=String(this.__sonyerFullTitular||this.titular||'').trim();
     const ctx=globalThis.__SONYER_QR_CONTEXT__;
     if(!this.__sonyerQrTemporary&&/^9\d{8}$/.test(phone)&&name.length>=2&&ctx&&Date.now()-ctx.date<300000)
       __SONYER_storeQrAlias(ctx.raw,phone,name).catch(()=>{});

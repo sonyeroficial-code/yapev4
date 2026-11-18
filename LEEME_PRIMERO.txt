@@ -1,0 +1,35 @@
+CORRECCION V8 — QR SINCRONIZADO ENTRE CELULARES
+
+Problema comprobado:
+- La asociación QR -> titular/celular estaba en almacenamiento local por UID.
+- El servidor solo aceptaba save-qr; no tenía la acción lookup-qr.
+- Si el QR no contiene un celular real, la búsqueda general por número no sirve.
+
+ARCHIVOS EN ESTE ZIP
+1) app-local.js — reemplazar en la RAÍZ de tu proyecto
+2) index.html — reemplazar en la RAÍZ para evitar código antiguo en caché
+3) ACTUALIZAR_sonyer-global.ts — publicar el contenido como Edge Function
+   Supabase -> Edge Functions -> sonyer-global (NO subirlo a Vercel como si fuera JS de la app)
+
+NO CAMBIAN: diseño, login/PIN, pantallas, guardado normal de contactos, pago de simulación.
+
+PASOS OBLIGATORIOS
+1. Publica la función 'sonyer-global' con el archivo ACTUALIZAR_sonyer-global.ts.
+   Requiere la tabla 'qrs' con columnas firebase_id (UNIQUE), qr, phone,
+   name, destino y firebase_data y el secreto SONYER_SUPABASE_SECRET_KEY.
+   Es la misma tabla que usa la acción 'save-qr' existente.
+2. Reemplaza app-local.js + index.html en Vercel (o en tu carpeta Acode para pruebas).
+3. En el PRIMER celular vuelve a cargar y GUARDAR el QR con su celular REAL
+   y nombre completo usando la opción de guardar contacto desde el QR.
+4. En el SEGUNDO celular carga la misma versión y escanea ese QR.
+   Debe consultar Supabase y recuperar ese nombre/celular si se guardó online.
+
+IMPORTANTE
+- Para QR antiguos asociados solo en el primer teléfono, escanéalo una vez
+  allí con V8 y conexión: se intentará migrar automáticamente al servidor.
+  Como alternativa vuelve a guardarlo como contacto con nombre y celular.
+- Debes implementar/republicar la Edge Function, no basta con subir los 2 archivos web.
+- Si falta la tabla, permisos, secreto o función, la consulta seguirá sin sincronizar.
+- No hay acceso a tu servidor real desde este entorno: la integración online no
+  se pudo comprobar en producción.
+- Números temporales de la simulación no se envían como datos del contacto.
